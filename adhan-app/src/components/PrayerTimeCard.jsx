@@ -20,14 +20,16 @@ function PrayerTimeCard() {
      ];
 
      return (
-          <div className="flex justify-between gap-3 p-4">
+          <div className="flex justify-center gap-4 p-4">
                {prayers.map(prayer => (
                     <div
                          key={prayer.name}
-                         className="p-9 bg-green-500 rounded-2xl shadow hover:bg-green-600 transition-colors duration-300"
+                         className="p-4 bg-white/10 backdrop-blur-lg rounded-xl 
+                     hover:transform hover:-translate-y-1 transition-all duration-300
+                     border border-white/20 text-white shadow-lg"
                     >
-                         <div className="text-2xl font-bold round">{prayer.name}</div>
-                         <div className='text-2xl'>{prayer.time}</div>
+                         <div className="text-lg font-bold">{prayer.name}</div>
+                         <div className="text-base opacity-90">{prayer.time}</div>
                     </div>
                ))}
           </div>
