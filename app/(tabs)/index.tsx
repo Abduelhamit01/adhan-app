@@ -1,74 +1,127 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { useState, useContext, useRef, useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Background } from '../components/Background';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// Components
+import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
+import { PrayerTimesList } from '../components/PrayerTimesList';
+
+// Types
+import { PrayerTimes, NextPrayer } from '../types/prayer';
+import { City } from '../types/city';
+import { PrayerTheme } from '../types/theme';
+
+// Context
+import { ThemeContext } from '../context/ThemeContext';
+
+// Services
+import { prayerTimesService } from '../services/prayerTimes.service';
+
+// Constants
+import { CITIES } from '../constants/cities';
+
+// Styles
+import { homeStyles } from '../styles/home.styles';
+
+const STORAGE_KEY = 'selectedCity';
 
 export default function HomeScreen() {
+  const { isDarkMode } = useContext(ThemeContext);
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes>({});
+  const [nextPrayer, setNextPrayer] = useState<NextPrayer | null>(null);
+  const [timeUntilNextPrayer, setTimeUntilNextPrayer] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<City>(CITIES[0]);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const currentTheme: PrayerTheme = {
+    primary: 'transparent',
+    secondary: '#F7F9FC',
+    accent: '#566B85',
+    text: '#566B85'
+  };
+
+  useEffect(() => {
+    // Load saved city on startup
+    const loadSavedCity = async () => {
+      try {
+        const savedCityId = await AsyncStorage.getItem(STORAGE_KEY);
+        if (savedCityId) {
+          const city = CITIES.find(c => c.id === savedCityId);
+          if (city) {
+            setSelectedCity(city);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved city:', error);
+      }
+    };
+
+    loadSavedCity();
+  }, []);
+
+  const handleCityChange = async (city: City) => {
+    setSelectedCity(city);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, city.id);
+    } catch (error) {
+      console.error('Error saving city:', error);
+    }
+  };
+
+  const updatePrayerTimes = async () => {
+    try {
+      const times = await prayerTimesService.fetchPrayerTimes(selectedCity.id, new Date());
+      setPrayerTimes(times);
+      const next = prayerTimesService.getNextPrayer(times);
+      setNextPrayer(next);
+    } catch (error) {
+      console.error('Error fetching prayer times:', error);
+    }
+  };
+
+  useEffect(() => {
+    updatePrayerTimes();
+  }, [selectedCity]);
+
+  useEffect(() => {
+    if (nextPrayer) {
+      const interval = setInterval(() => {
+        const timeUntil = prayerTimesService.getTimeUntilNextPrayer(nextPrayer);
+        const formattedTime = prayerTimesService.formatTimeUntilPrayer(timeUntil);
+        setTimeUntilNextPrayer(formattedTime);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [nextPrayer]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={[homeStyles.container, { backgroundColor: 'transparent' }]}>
+      <Background />
+      <StatusBar style="dark" />
+      
+      <ScrollView
+        style={{ backgroundColor: 'transparent' }}
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <NextPrayerCountdown
+          nextPrayer={nextPrayer}
+          timeUntilNextPrayer={timeUntilNextPrayer}
+          currentTheme={currentTheme}
+          cityName={selectedCity.name}
+          selectedCityId={selectedCity.id}
+          onCityChange={handleCityChange}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+        <PrayerTimesList
+          prayerTimes={prayerTimes}
+          nextPrayer={nextPrayer}
+          currentTheme={currentTheme}
+        />
+      </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
