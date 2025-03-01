@@ -39,13 +39,13 @@ export const NextPrayerCountdown: React.FC<NextPrayerCountdownProps> = ({
         selectedCityId={selectedCityId}
         onCityChange={onCityChange}
       />
-      <Text style={nextPrayerStyles.prayerName}>
-        bis {nextPrayer.name}
-      </Text>
       <View style={nextPrayerStyles.timeContainer}>
         <Text style={nextPrayerStyles.timeValue}>
           {formatNumber(hours)}:{formatNumber(minutes)}:{formatNumber(seconds)}
         </Text>
+      <Text style={nextPrayerStyles.prayerName}>
+        bis {nextPrayer.name}
+      </Text>
       </View>
     </View>
   );

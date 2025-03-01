@@ -4,25 +4,25 @@ export const prayerListStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    marginTop: '20%'
+    marginTop: '5%'
   },
   prayerItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     marginVertical: 2
   },
   prayerName: {
-    fontSize: 17,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#566B85',
     letterSpacing: 0.3
   },
   prayerTime: {
-    fontSize: 17,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#566B85',
     letterSpacing: 0.3
   },

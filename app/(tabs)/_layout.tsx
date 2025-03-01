@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Platform, View } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useContext } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
@@ -33,7 +33,12 @@ export default function TabLayout() {
           position: 'absolute',
         },
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 13,
+          fontWeight: '600',
+          marginTop: 4,
+        },
         tabBarItemStyle: {
           paddingTop: Platform.OS === 'ios' ? 8 : 10,
         },
@@ -45,6 +50,16 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Gebetszeiten',
+          tabBarLabel: ({ focused }) => (
+            <Text style={{ 
+              fontSize: 13,
+              fontWeight: '600',
+              color: focused ? '#566B85' : '#A3B4C8',
+              marginTop: 4,
+            }}>
+              Gebetszeiten
+            </Text>
+          ),
           tabBarIcon: ({ color, focused }) => (
             <View style={{ 
               width: iconContainerSize,
@@ -72,6 +87,16 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Einstellungen',
+          tabBarLabel: ({ focused }) => (
+            <Text style={{ 
+              fontSize: 13,
+              fontWeight: '600',
+              color: focused ? '#566B85' : '#A3B4C8',
+              marginTop: 4,
+            }}>
+              Einstellungen
+            </Text>
+          ),
           tabBarIcon: ({ color, focused }) => (
             <View style={{ 
               width: iconContainerSize,
