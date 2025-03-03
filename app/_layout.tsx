@@ -25,7 +25,7 @@ export default function RootLayout() {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          backgroundColor: 'transparent',
         }}
       >
         <MaterialCommunityIcons 
