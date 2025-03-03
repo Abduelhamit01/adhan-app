@@ -83,7 +83,7 @@ class PrayerTimesService {
       const data: AladhanResponse = await response.json();
       
       // Convert API response to our format with Arabic names
-      return {
+      const times = {
         Fajr: this.adjustTime(data.data.timings.Fajr, -10),
         Sunrise: data.data.timings.Sunrise,
         Dhuhr: data.data.timings.Dhuhr,
@@ -91,6 +91,9 @@ class PrayerTimesService {
         Maghrib: data.data.timings.Maghrib,
         Isha: data.data.timings.Isha
       };
+
+      console.log('Fetched prayer times:', times);
+      return times;
     } catch (error) {
       console.error('Error fetching prayer times:', error);
       throw error;
@@ -121,6 +124,9 @@ class PrayerTimesService {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
+    // Add console.log to debug prayer times
+    console.log('Current prayer times:', prayerTimes);
+
     const prayers = [
       { name: 'Fajr', time: prayerTimes.Fajr },
       { name: 'Sunrise', time: prayerTimes.Sunrise },
@@ -130,6 +136,9 @@ class PrayerTimesService {
       { name: 'Isha', time: prayerTimes.Isha }
     ];
 
+    // Add console.log to debug next prayer
+    console.log('Current time (minutes):', currentTime);
+
     // Find the next prayer
     for (const prayer of prayers) {
       if (!prayer.time) continue;
@@ -137,12 +146,16 @@ class PrayerTimesService {
       const [hours, minutes] = prayer.time.split(':').map(Number);
       const prayerTime = hours * 60 + minutes;
 
+      console.log(`Checking prayer ${prayer.name} at ${prayer.time} (${prayerTime} minutes)`);
+
       if (prayerTime > currentTime) {
+        console.log('Next prayer found:', prayer);
         return prayer;
       }
     }
 
     // If no prayer is found, return the first prayer of the next day
+    console.log('No prayer found for today, returning first prayer for tomorrow:', prayers[0]);
     return prayers[0];
   }
 

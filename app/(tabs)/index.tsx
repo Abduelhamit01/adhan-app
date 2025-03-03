@@ -3,7 +3,7 @@ import { useState, useContext, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Background } from '../components/Background';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Components
 import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
@@ -25,6 +25,17 @@ import { CITIES } from '../constants/cities';
 
 // Styles
 import { homeStyles } from '../styles/home.styles';
+
+type PrayerName = 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+
+const PRAYER_GRADIENTS: Record<PrayerName, [string, string, string]> = {
+  Fajr: ['#F1F1FF', '#E6E6FA', '#D8D8FF'], // Dawn purple gradient
+  Sunrise: ['#F8FBFF', '#E6F3FF', '#D9EEFF'], // Morning blue gradient
+  Dhuhr: ['#FFF9F3', '#FFF3E6', '#FFE8CC'], // Noon beige gradient
+  Asr: ['#FFFDF5', '#FFF5D6', '#FFE5A3'], // Afternoon yellow gradient
+  Maghrib: ['#FFF1F1', '#FFE6E6', '#FFD9D9'], // Sunset pink gradient
+  Isha: ['#F1F1FF', '#E6E6FA', '#D8D8FF'], // Night purple gradient
+} as const;
 
 const STORAGE_KEY = 'selectedCity';
 
@@ -87,6 +98,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (nextPrayer) {
+      console.log('Current next prayer:', nextPrayer);
+      console.log('Selected background color:', PRAYER_GRADIENTS[nextPrayer.name as PrayerName]);
+      
       const interval = setInterval(() => {
         const timeUntil = prayerTimesService.getTimeUntilNextPrayer(nextPrayer);
         const formattedTime = prayerTimesService.formatTimeUntilPrayer(timeUntil);
@@ -98,33 +112,37 @@ export default function HomeScreen() {
   }, [nextPrayer]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F7F9FC' }}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <Background />
-        <StatusBar style="dark" />
-        
-        <ScrollView
-          style={{ backgroundColor: 'transparent' }}
-          ref={scrollViewRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-        >
-          <NextPrayerCountdown
-            nextPrayer={nextPrayer}
-            timeUntilNextPrayer={timeUntilNextPrayer}
-            currentTheme={currentTheme}
-            cityName={selectedCity.name}
-            selectedCityId={selectedCity.id}
-            onCityChange={handleCityChange}
-          />
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={nextPrayer ? PRAYER_GRADIENTS[nextPrayer.name as PrayerName] : ['#F7F9FC', '#F0F3F9', '#E8EDF5']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <StatusBar style="dark" />
+          
+          <ScrollView
+            style={{ backgroundColor: 'transparent' }}
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 32 }}
+          >
+            <NextPrayerCountdown
+              nextPrayer={nextPrayer}
+              timeUntilNextPrayer={timeUntilNextPrayer}
+              currentTheme={currentTheme}
+              cityName={selectedCity.name}
+              selectedCityId={selectedCity.id}
+              onCityChange={handleCityChange}
+            />
 
-          <PrayerTimesList
-            prayerTimes={prayerTimes}
-            nextPrayer={nextPrayer}
-            currentTheme={currentTheme}
-          />
-        </ScrollView>
-      </SafeAreaView>
+            <PrayerTimesList
+              prayerTimes={prayerTimes}
+              nextPrayer={nextPrayer}
+              currentTheme={currentTheme}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
     </View>
   );
 }
