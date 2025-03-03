@@ -2,8 +2,8 @@ import { StyleSheet } from 'react-native';
 
 export const nextPrayerStyles = StyleSheet.create({
   container: {
-    paddingTop: 100,
-    paddingBottom: 0,
+    paddingTop: 60,
+    paddingBottom: 16,
     paddingHorizontal: 20
   },
   cityName: {
@@ -24,7 +24,7 @@ export const nextPrayerStyles = StyleSheet.create({
   },
   timeContainer: {
     alignItems: 'center',
-    marginBottom: 120,
+    marginBottom: 32,
     paddingHorizontal: 20
   },
   timeValue: {

@@ -1,6 +1,7 @@
 import { View, ScrollView } from 'react-native';
 import { useState, useContext, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Background } from '../components/Background';
 
@@ -97,31 +98,33 @@ export default function HomeScreen() {
   }, [nextPrayer]);
 
   return (
-    <View style={[homeStyles.container, { backgroundColor: 'transparent' }]}>
-      <Background />
-      <StatusBar style="dark" />
-      
-      <ScrollView
-        style={{ backgroundColor: 'transparent' }}
-        ref={scrollViewRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
-      >
-        <NextPrayerCountdown
-          nextPrayer={nextPrayer}
-          timeUntilNextPrayer={timeUntilNextPrayer}
-          currentTheme={currentTheme}
-          cityName={selectedCity.name}
-          selectedCityId={selectedCity.id}
-          onCityChange={handleCityChange}
-        />
+    <View style={{ flex: 1, backgroundColor: '#F7F9FC' }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Background />
+        <StatusBar style="dark" />
+        
+        <ScrollView
+          style={{ backgroundColor: 'transparent' }}
+          ref={scrollViewRef}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 32 }}
+        >
+          <NextPrayerCountdown
+            nextPrayer={nextPrayer}
+            timeUntilNextPrayer={timeUntilNextPrayer}
+            currentTheme={currentTheme}
+            cityName={selectedCity.name}
+            selectedCityId={selectedCity.id}
+            onCityChange={handleCityChange}
+          />
 
-        <PrayerTimesList
-          prayerTimes={prayerTimes}
-          nextPrayer={nextPrayer}
-          currentTheme={currentTheme}
-        />
-      </ScrollView>
+          <PrayerTimesList
+            prayerTimes={prayerTimes}
+            nextPrayer={nextPrayer}
+            currentTheme={currentTheme}
+          />
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }

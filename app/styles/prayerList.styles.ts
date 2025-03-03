@@ -4,7 +4,7 @@ export const prayerListStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    marginTop: '5%'
+    paddingTop: 16
   },
   prayerItem: {
     flexDirection: 'row',
@@ -12,7 +12,9 @@ export const prayerListStyles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     paddingHorizontal: 30,
-    marginVertical: 2
+    marginVertical: 2,
+    borderRadius: 12,
+    backgroundColor: 'transparent'
   },
   prayerName: {
     fontSize: 22,
@@ -28,7 +30,7 @@ export const prayerListStyles = StyleSheet.create({
   },
   activePrayerItem: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#93B5FF',
     borderRadius: 12,
     marginVertical: 2,

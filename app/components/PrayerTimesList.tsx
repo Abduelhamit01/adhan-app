@@ -10,23 +10,13 @@ interface PrayerTimesListProps {
   currentTheme: PrayerTheme;
 }
 
-const prayerNames: { [key: string]: string } = {
-  'fajr': 'Fajr',
-  'sunrise': 'Shuruq',
-  'dhuhr': 'Dhuhr',
-  'asr': 'Asr',
-  'maghrib': 'Maghrib',
-  'isha': 'Isha'
-};
-
 export const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
   prayerTimes,
   nextPrayer,
   currentTheme
 }) => {
   const renderPrayerTime = (name: string, time: string) => {
-    const isNext = nextPrayer?.name.toLowerCase() === name.toLowerCase();
-    const displayName = prayerNames[name.toLowerCase()] || name;
+    const isNext = nextPrayer?.name === name;
 
     return (
       <View
@@ -37,7 +27,7 @@ export const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
         ]}
       >
         <Text style={prayerListStyles.prayerName}>
-          {displayName}
+          {name}
         </Text>
         <Text style={prayerListStyles.prayerTime}>
           {time}

@@ -54,20 +54,19 @@ class PrayerTimesService {
       const { latitude, longitude } = city.coordinates;
       const timestamp = Math.floor(date.getTime() / 1000);
 
-      // DITIB-specific adjustments
       const response = await fetch(
         `https://api.aladhan.com/v1/timings/${timestamp}?` +
         `latitude=${latitude}&` +
         `longitude=${longitude}&` +
-        `method=3&` + // ISNA method as base
-        `school=1&` + // Hanafi
-        `midnightMode=1&` + // Standard
+        `method=3&` +
+        `school=1&` +
+        `midnightMode=1&` +
         `timezonestring=Europe/Berlin&` +
-        `latitudeAdjustmentMethod=1&` + // Middle of the night
-        `adjustment=1&` + // Enable adjustments
-        `tune=2,2,0,0,2,2,2,2,0&` + // Fine-tune adjustments for DITIB times
-        `fajrAngle=15&` + // DITIB Fajr angle
-        `ishaAngle=15`, // DITIB Isha angle
+        `latitudeAdjustmentMethod=1&` +
+        `adjustment=1&` +
+        `tune=2,2,0,0,2,2,2,2,0&` +
+        `fajrAngle=15&` +
+        `ishaAngle=15`,
         {
           method: 'GET',
           headers: {
@@ -83,14 +82,14 @@ class PrayerTimesService {
 
       const data: AladhanResponse = await response.json();
       
-      // Convert API response to our format
+      // Convert API response to our format with Arabic names
       return {
-        Imsak: this.adjustTime(data.data.timings.Fajr, -10),
-        Gunes: data.data.timings.Sunrise,
-        Ogle: data.data.timings.Dhuhr,
-        Ikindi: this.adjustTime(data.data.timings.Asr, 5),
-        Aksam: data.data.timings.Maghrib,
-        Yatsi: data.data.timings.Isha
+        Fajr: this.adjustTime(data.data.timings.Fajr, -10),
+        Sunrise: data.data.timings.Sunrise,
+        Dhuhr: data.data.timings.Dhuhr,
+        Asr: this.adjustTime(data.data.timings.Asr, 5),
+        Maghrib: data.data.timings.Maghrib,
+        Isha: data.data.timings.Isha
       };
     } catch (error) {
       console.error('Error fetching prayer times:', error);
@@ -123,12 +122,12 @@ class PrayerTimesService {
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
     const prayers = [
-      { name: 'Imsak', time: prayerTimes.Imsak },
-      { name: 'Güneş', time: prayerTimes.Gunes },
-      { name: 'Öğle', time: prayerTimes.Ogle },
-      { name: 'İkindi', time: prayerTimes.Ikindi },
-      { name: 'Akşam', time: prayerTimes.Aksam },
-      { name: 'Yatsı', time: prayerTimes.Yatsi }
+      { name: 'Fajr', time: prayerTimes.Fajr },
+      { name: 'Sunrise', time: prayerTimes.Sunrise },
+      { name: 'Dhuhr', time: prayerTimes.Dhuhr },
+      { name: 'Asr', time: prayerTimes.Asr },
+      { name: 'Maghrib', time: prayerTimes.Maghrib },
+      { name: 'Isha', time: prayerTimes.Isha }
     ];
 
     // Find the next prayer
