@@ -1,118 +1,105 @@
-import { View, StyleSheet } from 'react-native';
-import { Modal, Text, TextInput, Button } from 'react-native-paper';
-import { useState, useEffect } from 'react';
-import { Colors } from '../constants/Colors';
-import { NotificationSettings } from '../types/prayer';
+import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 
 interface NotificationModalProps {
   visible: boolean;
   onDismiss: () => void;
-  prayerName: string;
-  notificationSettings: NotificationSettings;
-  onSave: (settings: NotificationSettings) => void;
-  isDarkMode: boolean;
+  onAllow: () => void;
 }
 
 export const NotificationModal = ({
   visible,
   onDismiss,
-  prayerName,
-  notificationSettings,
-  onSave,
-  isDarkMode,
+  onAllow,
 }: NotificationModalProps) => {
-  const [minutes, setMinutes] = useState<number>(15);
-
-  useEffect(() => {
-    if (notificationSettings[prayerName]) {
-      setMinutes(notificationSettings[prayerName].minutes);
-    }
-  }, [prayerName, notificationSettings]);
-
-  const handleSave = () => {
-    const updatedSettings = {
-      ...notificationSettings,
-      [prayerName]: {
-        enabled: true,
-        minutes,
-      },
-    };
-    onSave(updatedSettings);
-  };
-
-  const handleDisable = () => {
-    const updatedSettings = {
-      ...notificationSettings,
-      [prayerName]: {
-        enabled: false,
-        minutes,
-      },
-    };
-    onSave(updatedSettings);
-  };
-
   return (
     <Modal
       visible={visible}
-      onDismiss={onDismiss}
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: isDarkMode ? Colors.dark.background : Colors.light.background }
-      ]}
+      transparent
+      animationType="fade"
+      onRequestClose={onDismiss}
     >
-      <View style={styles.content}>
-        <Text variant="titleLarge" style={styles.title}>
-          Benachrichtigungen für {prayerName}
-        </Text>
-        
-        <TextInput
-          mode="outlined"
-          label="Minuten vor Gebetszeit"
-          keyboardType="numeric"
-          value={String(minutes)}
-          onChangeText={(text) => setMinutes(Number(text))}
-          style={styles.input}
-        />
-
-        <Button 
-          mode="contained" 
-          onPress={handleSave}
-          style={styles.saveButton}
-        >
-          Speichern
-        </Button>
-
-        <Button 
-          mode="outlined" 
-          onPress={handleDisable}
-          style={styles.disableButton}
-        >
-          Deaktivieren
-        </Button>
+      <View style={styles.modalOverlay}>
+        <BlurView intensity={20} tint="dark" style={styles.blurView}>
+          <View style={styles.modalContent}>
+            <MaterialCommunityIcons name="bell-outline" size={48} color="#566B85" />
+            <Text style={styles.title}>Benachrichtigungen</Text>
+            <Text style={styles.description}>
+              Erlaube Benachrichtigungen, um keine Gebetszeit zu verpassen
+            </Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity onPress={onDismiss} style={[styles.button, styles.cancelButton]}>
+                <Text style={[styles.buttonText, styles.cancelButtonText]}>Später</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onAllow} style={[styles.button, styles.allowButton]}>
+                <Text style={[styles.buttonText, styles.allowButtonText]}>Erlauben</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </BlurView>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    margin: 20,
-    borderRadius: 16,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  blurView: {
+    borderRadius: 20,
     overflow: 'hidden',
   },
-  content: {
-    padding: 20,
+  modalContent: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 24,
+    borderRadius: 20,
+    alignItems: 'center',
+    width: 320,
   },
   title: {
-    marginBottom: 20,
-  },
-  input: {
-    marginBottom: 20,
-  },
-  saveButton: {
-    marginBottom: 12,
-  },
-  disableButton: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#566B85',
+    marginTop: 16,
     marginBottom: 8,
+  },
+  description: {
+    fontSize: 16,
+    color: '#566B85',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    minWidth: 120,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F0F3F9',
+  },
+  cancelButtonText: {
+    color: '#566B85',
+  },
+  allowButton: {
+    backgroundColor: '#566B85',
+  },
+  allowButtonText: {
+    color: '#FFFFFF',
   },
 }); 

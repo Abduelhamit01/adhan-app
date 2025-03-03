@@ -1,30 +1,24 @@
 import { View, ScrollView } from 'react-native';
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
 // Components
-import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
-import { PrayerTimesList } from '../components/PrayerTimesList';
+import { NextPrayerCountdown } from './components/NextPrayerCountdown';
+import { PrayerTimesList } from './components/PrayerTimesList';
 
 // Types
-import { PrayerTimes, NextPrayer } from '../types/prayer';
-import { City } from '../types/city';
-import { PrayerTheme } from '../types/theme';
-
-// Context
-import { ThemeContext } from '../context/ThemeContext';
+import { PrayerTimes, NextPrayer } from './types/prayer';
+import { City } from './types/city';
+import { PrayerTheme } from './types/theme';
 
 // Services
-import { prayerTimesService } from '../services/prayerTimes.service';
+import { prayerTimesService } from './services/prayerTimes.service';
 
 // Constants
-import { CITIES } from '../constants/cities';
-
-// Styles
-import { homeStyles } from '../styles/home.styles';
+import { CITIES } from './constants/cities';
 
 type PrayerName = 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
 
@@ -40,7 +34,6 @@ const PRAYER_GRADIENTS: Record<PrayerName, [string, string, string]> = {
 const STORAGE_KEY = 'selectedCity';
 
 export default function HomeScreen() {
-  const { isDarkMode } = useContext(ThemeContext);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes>({});
   const [nextPrayer, setNextPrayer] = useState<NextPrayer | null>(null);
   const [timeUntilNextPrayer, setTimeUntilNextPrayer] = useState<string>('');

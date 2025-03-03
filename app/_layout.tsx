@@ -1,101 +1,65 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useContext } from 'react';
-import { useColorScheme } from 'react-native';
-import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { ThemeProvider } from './context/ThemeContext';
-import { ThemeContext } from './context/ThemeContext';
-import { Colors } from './constants/Colors';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Platform, Pressable } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-  const { isDarkMode } = useContext(ThemeContext);
+  const router = useRouter();
   
-  // Angepasste Themes für React Navigation
-  const navigationTheme = isDarkMode ? {
-    ...DarkTheme,
-    colors: {
-      ...DarkTheme.colors,
-      primary: Colors.dark.accent,
-      background: Colors.dark.background,
-    }
-  } : {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      primary: Colors.light.accent,
-      background: Colors.light.background,
-    }
-  };
-  
-  // Angepasste Themes für React Native Paper
-  const paperTheme = isDarkMode ? {
-    ...MD3DarkTheme,
-    colors: {
-      ...MD3DarkTheme.colors,
-      primary: Colors.dark.accent,
-      background: Colors.dark.background,
-      surface: Colors.dark.surface,
-    }
-  } : {
-    ...MD3LightTheme,
-    colors: {
-      ...MD3LightTheme.colors,
-      primary: Colors.light.accent,
-      background: Colors.light.background,
-      surface: Colors.light.surface,
-    }
-  };
+  const SettingsButton = () => (
+    <Pressable
+      onPress={() => router.push('/settings')}
+      style={({ pressed }) => ({
+        marginRight: 16,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <BlurView
+        intensity={60}
+        tint="light"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        }}
+      >
+        <MaterialCommunityIcons 
+          name="cog-outline" 
+          size={22} 
+          color="#566B85" 
+          style={{ opacity: 0.8 }}
+        />
+      </BlurView>
+    </Pressable>
+  );
 
   return (
-    <ThemeProvider>
-      <NavigationThemeProvider value={navigationTheme}>
-        <PaperProvider theme={paperTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
-        </PaperProvider>
-      </NavigationThemeProvider>
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerTitle: '',
+          headerRight: () => <SettingsButton />,
+        }}
+      />
+      <Stack.Screen
+        name="settings"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+    </Stack>
   );
 }
