@@ -92,6 +92,7 @@ class PrayerTimesService {
         country: country,
         countryCode: countryCode,
         region: region,
+        state: region,
         coordinates: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude
@@ -370,6 +371,7 @@ class PrayerTimesService {
         name: 'Aktueller Standort',
         country: 'Unbekannt',
         countryCode: '',
+        state: '',
         coordinates: {
           latitude: 0,
           longitude: 0

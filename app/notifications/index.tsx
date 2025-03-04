@@ -36,7 +36,14 @@ interface PrayerNotifications {
   [key: string]: PrayerSettings;
 }
 
-const TimePickerPopup = ({ visible, onClose, onSelect, anchorPosition }) => {
+interface TimePickerPopupProps {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (minutes: number) => void;
+  anchorPosition: { x: number; y: number };
+}
+
+const TimePickerPopup = ({ visible, onClose, onSelect, anchorPosition }: TimePickerPopupProps) => {
   if (!visible) return null;
 
   return (
@@ -201,7 +208,7 @@ export default function NotificationsScreen() {
         },
         trigger: {
           date: trigger,
-          type: 'date'
+          type: "timestamp"
         },
       });
     } catch (error) {
@@ -268,7 +275,7 @@ export default function NotificationsScreen() {
   const handlePrayerPress = (prayer: string, event: any) => {
     if (!enableNotifications || !prayerNotifications[prayer].enabled) return;
     
-    event.target.measure((x, y, width, height, pageX, pageY) => {
+    event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
       setAnchorPosition({ x: pageX, y: pageY });
       setSelectedPrayer(prayer);
       setTimePickerVisible(true);
@@ -285,6 +292,7 @@ export default function NotificationsScreen() {
     const isEnabled = prayerNotifications[prayer].enabled && enableNotifications;
     const reminderTime = prayerNotifications[prayer].reminderTime;
     const isSelected = selectedPrayer === prayer && timePickerVisible;
+    const prayerName = String(prayer);
 
     return (
       <View>
@@ -297,18 +305,18 @@ export default function NotificationsScreen() {
                   setTimePickerVisible(false);
                   setSelectedPrayer(null);
                 } else {
-                  setSelectedPrayer(prayer);
+                  setSelectedPrayer(prayerName);
                   setTimePickerVisible(true);
                 }
               }
             }}
           >
             <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
-              <Feather name={icon} size={20} color={color} />
+              <Feather name={icon as any} size={20} color={color} />
             </View>
             <View style={styles.textContainer}>
               <Text style={[styles.prayerText, { color }]}>
-                {prayer.charAt(0).toUpperCase() + prayer.slice(1)}
+                {prayerName.charAt(0).toUpperCase() + prayerName.slice(1)}
               </Text>
               {isEnabled && (
                 <View style={styles.reminderContainer}>
