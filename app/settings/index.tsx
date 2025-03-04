@@ -1,13 +1,16 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { useState } from 'react';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const [fastingTimer, setFastingTimer] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const BackButton = () => (
     <Pressable
@@ -31,14 +34,18 @@ export default function SettingsScreen() {
         }}
       >
         <MaterialCommunityIcons 
-          name="chevron-left" 
-          size={28} 
+          name="close" 
+          size={24} 
           color="#566B85" 
           style={{ opacity: 0.8 }}
         />
       </BlurView>
     </Pressable>
   );
+
+  const navigateToNotifications = () => {
+    router.push('/notifications');
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -52,10 +59,47 @@ export default function SettingsScreen() {
           <StatusBar style="dark" />
           <View style={styles.header}>
             <BackButton />
-            <Text style={styles.title}>Einstellungen</Text>
+            <Text style={styles.title}>Settings</Text>
+            <View style={{ width: 36 }} />
           </View>
           <ScrollView style={styles.container}>
-            {/* Hier können weitere Einstellungen hinzugefügt werden */}
+            {/* Time Settings Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>TIME SETTINGS</Text>
+              <View style={styles.settingItem}>
+                <View style={styles.settingItemLeft}>
+                  <Ionicons name="sunny-outline" size={24} color="#000" />
+                  <Text style={styles.settingItemText}>Fasting Timer</Text>
+                </View>
+                <Switch
+                  value={fastingTimer}
+                  onValueChange={setFastingTimer}
+                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
+                  thumbColor={'#FFFFFF'}
+                  ios_backgroundColor="#E5E5EA"
+                />
+              </View>
+            </View>
+
+            {/* Notifications Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
+              <Pressable 
+                style={styles.settingItem}
+                onPress={navigateToNotifications}
+              >
+                <View style={styles.settingItemLeft}>
+                  <Ionicons name="notifications" size={24} color="#FF9500" />
+                  <Text style={styles.settingItemText}>Notifications</Text>
+                </View>
+                <View style={styles.settingItemRight}>
+                  <Text style={styles.settingItemStatus}>
+                    {notificationsEnabled ? 'On' : 'Off'}
+                  </Text>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color="#C7C7CC" />
+                </View>
+              </Pressable>
+            </View>
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
@@ -71,13 +115,52 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 20,
-    paddingRight: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 34,
     fontWeight: '700',
     color: '#566B85',
-    marginLeft: 16,
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 10,
+    marginLeft: 10,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 1,
+  },
+  settingItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingItemText: {
+    fontSize: 17,
+    fontWeight: '500',
+    marginLeft: 15,
+    color: '#000',
+  },
+  settingItemStatus: {
+    fontSize: 17,
+    color: '#007AFF',
+    marginRight: 5,
   },
 }); 
