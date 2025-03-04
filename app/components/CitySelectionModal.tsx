@@ -172,4 +172,6 @@ const styles = StyleSheet.create({
   selectedCityName: {
     fontWeight: '500'
   }
-}); 
+});
+
+export default CitySelectionModal; 

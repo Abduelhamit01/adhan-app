@@ -102,4 +102,6 @@ const styles = StyleSheet.create({
   allowButtonText: {
     color: '#FFFFFF',
   },
-}); 
+});
+
+export default NotificationModal; 

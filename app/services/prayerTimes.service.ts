@@ -86,16 +86,6 @@ class PrayerTimesService {
         region = address.region || '';
       }
 
-      console.log('Standort erfolgreich ermittelt:', {
-        city: cityName,
-        region: region,
-        country: country,
-        coordinates: {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        }
-      });
-
       return {
         id: 'current-location',
         name: cityName,

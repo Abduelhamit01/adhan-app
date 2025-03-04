@@ -90,9 +90,7 @@ export default function HomeScreen() {
   }, [selectedCity]);
 
   useEffect(() => {
-    if (nextPrayer) {
-      console.log('Current next prayer:', nextPrayer);
-      
+    if (nextPrayer) {      
       const interval = setInterval(() => {
         const timeUntil = prayerTimesService.getTimeUntilNextPrayer(nextPrayer);
         const formattedTime = prayerTimesService.formatTimeUntilPrayer(timeUntil);

@@ -8,6 +8,7 @@ import { BlurView } from 'expo-blur';
 import { useState, useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { prayerTimesService } from '../services/prayerTimes.service';
 
 // Konfiguriere die Benachrichtigungen
 Notifications.setNotificationHandler({
@@ -72,6 +73,8 @@ export default function NotificationsScreen() {
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [selectedPrayer, setSelectedPrayer] = useState<string | null>(null);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [prayerNotifications, setPrayerNotifications] = useState<PrayerNotifications>({
     fajr: { enabled: true, reminderTime: 0 },
     sunrise: { enabled: true, reminderTime: 0 },
@@ -86,9 +89,33 @@ export default function NotificationsScreen() {
     loadNotificationSettings();
   }, []);
 
+  // Separate useEffect for saving settings without triggering notifications
   useEffect(() => {
-    saveNotificationSettings();
+    if (isInitialLoad) return;
+    
+    const saveSettings = async () => {
+      try {
+        await AsyncStorage.setItem('notificationSettings', JSON.stringify({
+          enabled: enableNotifications,
+          prayers: prayerNotifications,
+        }));
+      } catch (error) {
+        // Silent error handling
+      }
+    };
+    saveSettings();
   }, [enableNotifications, prayerNotifications]);
+
+  // Separate useEffect for handling notification scheduling
+  useEffect(() => {
+    if (isInitialLoad) return;
+
+    if (enableNotifications) {
+      updateNotificationSchedule();
+    } else {
+      Notifications.cancelAllScheduledNotificationsAsync();
+    }
+  }, [enableNotifications]);
 
   const loadNotificationSettings = async () => {
     try {
@@ -98,68 +125,92 @@ export default function NotificationsScreen() {
         setEnableNotifications(enabled);
         setPrayerNotifications(prayers);
       }
+      setIsInitialLoad(false);
     } catch (error) {
-      console.error('Error loading notification settings:', error);
-    }
-  };
-
-  const saveNotificationSettings = async () => {
-    try {
-      await AsyncStorage.setItem('notificationSettings', JSON.stringify({
-        enabled: enableNotifications,
-        prayers: prayerNotifications,
-      }));
-      await updateNotificationSchedule();
-    } catch (error) {
-      console.error('Error saving notification settings:', error);
+      // Silent error handling in production
+      setIsInitialLoad(false);
     }
   };
 
   const updateNotificationSchedule = async () => {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (!enableNotifications) return;
+    if (isScheduling) return;
+    
+    try {
+      setIsScheduling(true);
+      
+      // Cancel all existing notifications before scheduling new ones
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      
+      if (!enableNotifications) return;
 
-    Object.entries(prayerNotifications).forEach(([prayer, settings]) => {
-      if (settings.enabled) {
-        schedulePrayerNotification(prayer, settings.reminderTime);
+      const savedCityId = await AsyncStorage.getItem('selectedCity');
+      if (!savedCityId) {
+        return;
       }
-    });
+
+      const today = new Date();
+      const prayerTimes = await prayerTimesService.fetchPrayerTimes(savedCityId, today);
+      
+      if (!prayerTimes) {
+        return;
+      }
+
+      const nextPrayer = prayerTimesService.getNextPrayer(prayerTimes);
+      if (!nextPrayer) {
+        return;
+      }
+
+      const prayerName = nextPrayer.name.toLowerCase();
+      const prayerSettings = prayerNotifications[prayerName];
+      
+      if (prayerSettings && prayerSettings.enabled) {
+        await schedulePrayerNotification(nextPrayer.name, prayerSettings.reminderTime, nextPrayer.time);
+      }
+    } catch (error) {
+      // Silent error handling
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
-  const schedulePrayerNotification = async (prayer: string, reminderTime: number) => {
+  const schedulePrayerNotification = async (prayer: string, reminderTime: number, prayerTime: string) => {
     try {
       const now = new Date();
-      const trigger = new Date(now);
-      trigger.setDate(trigger.getDate() + 1);
-      trigger.setHours(12);
-      trigger.setMinutes(0);
-      trigger.setSeconds(0);
+      const [hours, minutes] = prayerTime.split(':').map(Number);
       
+      // Create trigger time based on prayer time
+      const trigger = new Date();
+      trigger.setHours(hours, minutes, 0, 0);
+      
+      // Subtract reminder time
       trigger.setMinutes(trigger.getMinutes() - reminderTime);
-
+      
+      // If the time has already passed today, schedule for tomorrow
       if (trigger.getTime() <= now.getTime()) {
         trigger.setDate(trigger.getDate() + 1);
       }
 
+      // Schedule the notification with type specification
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: `Prayer Time - ${prayer}`,
+          title: `${prayer.charAt(0).toUpperCase() + prayer.slice(1)} Prayer`,
           body: reminderTime > 0 
             ? `${prayer} prayer will begin in ${reminderTime} minutes`
             : `It's time for ${prayer} prayer`,
           sound: true,
         },
         trigger: {
-          type: 'date',
-          timestamp: trigger.getTime(),
+          date: trigger,
+          type: 'date'
         },
       });
     } catch (error) {
-      console.error(`Error scheduling notification for ${prayer}:`, error);
+      // Silent error handling
     }
   };
 
   const togglePrayer = (prayer: keyof typeof prayerNotifications) => {
+    setIsInitialLoad(false); // Ensure this is a user action
     setPrayerNotifications(prev => ({
       ...prev,
       [prayer]: {
@@ -172,6 +223,7 @@ export default function NotificationsScreen() {
   const setReminderTime = (minutes: number) => {
     if (!selectedPrayer) return;
     
+    setIsInitialLoad(false); // Ensure this is a user action
     setPrayerNotifications(prev => ({
       ...prev,
       [selectedPrayer]: {
