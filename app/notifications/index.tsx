@@ -1,29 +1,186 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Ionicons, Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Konfiguriere die Benachrichtigungen
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+const REMINDER_OPTIONS = [
+  { value: 0, label: 'At time' },
+  { value: 5, label: '5 min' },
+  { value: 10, label: '10 min' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+];
+
+interface PrayerSettings {
+  enabled: boolean;
+  reminderTime: number;
+}
+
+interface PrayerNotifications {
+  [key: string]: PrayerSettings;
+}
+
+const TimePickerPopup = ({ visible, onClose, onSelect, anchorPosition }) => {
+  if (!visible) return null;
+
+  return (
+    <Pressable style={styles.popupOverlay} onPress={onClose}>
+      <View style={[
+        styles.popupContent,
+        {
+          position: 'absolute',
+          top: anchorPosition.y + 25,
+          left: anchorPosition.x + 48,
+          right: 80,
+        }
+      ]}>
+        {REMINDER_OPTIONS.map((option, index) => (
+          <Pressable
+            key={option.value}
+            style={[
+              styles.popupOption,
+              index === 0 && styles.popupOptionFirst,
+              index === REMINDER_OPTIONS.length - 1 && styles.popupOptionLast,
+            ]}
+            onPress={() => onSelect(option.value)}
+          >
+            <Text style={styles.popupOptionText}>{option.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </Pressable>
+  );
+};
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const [enableNotifications, setEnableNotifications] = useState(true);
-  const [prayerNotifications, setPrayerNotifications] = useState({
-    fajr: true,
-    sunrise: true,
-    dhuhr: true,
-    asr: true,
-    maghrib: true,
-    isha: true,
+  const [selectedPrayer, setSelectedPrayer] = useState<string | null>(null);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [prayerNotifications, setPrayerNotifications] = useState<PrayerNotifications>({
+    fajr: { enabled: true, reminderTime: 0 },
+    sunrise: { enabled: true, reminderTime: 0 },
+    dhuhr: { enabled: true, reminderTime: 0 },
+    asr: { enabled: true, reminderTime: 0 },
+    maghrib: { enabled: true, reminderTime: 0 },
+    isha: { enabled: true, reminderTime: 0 },
   });
+  const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    loadNotificationSettings();
+  }, []);
+
+  useEffect(() => {
+    saveNotificationSettings();
+  }, [enableNotifications, prayerNotifications]);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const settings = await AsyncStorage.getItem('notificationSettings');
+      if (settings) {
+        const { enabled, prayers } = JSON.parse(settings);
+        setEnableNotifications(enabled);
+        setPrayerNotifications(prayers);
+      }
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+    }
+  };
+
+  const saveNotificationSettings = async () => {
+    try {
+      await AsyncStorage.setItem('notificationSettings', JSON.stringify({
+        enabled: enableNotifications,
+        prayers: prayerNotifications,
+      }));
+      await updateNotificationSchedule();
+    } catch (error) {
+      console.error('Error saving notification settings:', error);
+    }
+  };
+
+  const updateNotificationSchedule = async () => {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    if (!enableNotifications) return;
+
+    Object.entries(prayerNotifications).forEach(([prayer, settings]) => {
+      if (settings.enabled) {
+        schedulePrayerNotification(prayer, settings.reminderTime);
+      }
+    });
+  };
+
+  const schedulePrayerNotification = async (prayer: string, reminderTime: number) => {
+    try {
+      const now = new Date();
+      const trigger = new Date(now);
+      trigger.setDate(trigger.getDate() + 1);
+      trigger.setHours(12);
+      trigger.setMinutes(0);
+      trigger.setSeconds(0);
+      
+      trigger.setMinutes(trigger.getMinutes() - reminderTime);
+
+      if (trigger.getTime() <= now.getTime()) {
+        trigger.setDate(trigger.getDate() + 1);
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `Prayer Time - ${prayer}`,
+          body: reminderTime > 0 
+            ? `${prayer} prayer will begin in ${reminderTime} minutes`
+            : `It's time for ${prayer} prayer`,
+          sound: true,
+        },
+        trigger: {
+          type: 'date',
+          timestamp: trigger.getTime(),
+        },
+      });
+    } catch (error) {
+      console.error(`Error scheduling notification for ${prayer}:`, error);
+    }
+  };
 
   const togglePrayer = (prayer: keyof typeof prayerNotifications) => {
     setPrayerNotifications(prev => ({
       ...prev,
-      [prayer]: !prev[prayer]
+      [prayer]: {
+        ...prev[prayer],
+        enabled: !prev[prayer].enabled,
+      }
     }));
+  };
+
+  const setReminderTime = (minutes: number) => {
+    if (!selectedPrayer) return;
+    
+    setPrayerNotifications(prev => ({
+      ...prev,
+      [selectedPrayer]: {
+        ...prev[selectedPrayer],
+        reminderTime: minutes,
+      }
+    }));
+    setTimePickerVisible(false);
+    setSelectedPrayer(null);
   };
 
   const BackButton = () => (
@@ -56,6 +213,97 @@ export default function NotificationsScreen() {
     </Pressable>
   );
 
+  const handlePrayerPress = (prayer: string, event: any) => {
+    if (!enableNotifications || !prayerNotifications[prayer].enabled) return;
+    
+    event.target.measure((x, y, width, height, pageX, pageY) => {
+      setAnchorPosition({ x: pageX, y: pageY });
+      setSelectedPrayer(prayer);
+      setTimePickerVisible(true);
+    });
+  };
+
+  const renderPrayerItem = (
+    prayer: keyof typeof prayerNotifications,
+    icon: string,
+    color: string,
+    bgColor: string,
+    isLast: boolean = false
+  ) => {
+    const isEnabled = prayerNotifications[prayer].enabled && enableNotifications;
+    const reminderTime = prayerNotifications[prayer].reminderTime;
+    const isSelected = selectedPrayer === prayer && timePickerVisible;
+
+    return (
+      <View>
+        <View style={[styles.notificationItem, !isLast && !isSelected && styles.itemBorder]}>
+          <Pressable 
+            style={styles.prayerInfo}
+            onPress={() => {
+              if (isEnabled) {
+                if (isSelected) {
+                  setTimePickerVisible(false);
+                  setSelectedPrayer(null);
+                } else {
+                  setSelectedPrayer(prayer);
+                  setTimePickerVisible(true);
+                }
+              }
+            }}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+              <Feather name={icon} size={20} color={color} />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={[styles.prayerText, { color }]}>
+                {prayer.charAt(0).toUpperCase() + prayer.slice(1)}
+              </Text>
+              {isEnabled && (
+                <View style={styles.reminderContainer}>
+                  <Text style={styles.reminderText}>
+                    {reminderTime === 0 ? 'At time' : `${reminderTime} min`}
+                  </Text>
+                  <MaterialCommunityIcons 
+                    name={isSelected ? "chevron-up" : "chevron-down"}
+                    size={14} 
+                    color="#8E8E93" 
+                    style={styles.chevron}
+                  />
+                </View>
+              )}
+            </View>
+          </Pressable>
+          <Switch
+            value={prayerNotifications[prayer].enabled}
+            onValueChange={() => togglePrayer(prayer)}
+            trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
+            thumbColor={'#FFFFFF'}
+            ios_backgroundColor="#E5E5EA"
+            disabled={!enableNotifications}
+          />
+        </View>
+        {isSelected && (
+          <View style={styles.dropdownContent}>
+            {REMINDER_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={styles.dropdownOption}
+                onPress={() => setReminderTime(option.value)}
+              >
+                <Text style={[
+                  styles.dropdownOptionText,
+                  option.value === reminderTime && styles.dropdownOptionTextSelected
+                ]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <LinearGradient
@@ -72,9 +320,9 @@ export default function NotificationsScreen() {
             <View style={{ width: 36 }} />
           </View>
           <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            {/* Main Toggle */}
-            <View style={[styles.card, styles.mainToggle]}>
-              <View style={styles.notificationItem}>
+            <View style={styles.card}>
+              {/* Main Toggle */}
+              <View style={[styles.notificationItem, styles.itemBorder]}>
                 <View style={styles.prayerInfo}>
                   <View style={styles.iconContainer}>
                     <Ionicons name="notifications" size={22} color="#4F56EB" />
@@ -89,117 +337,14 @@ export default function NotificationsScreen() {
                   ios_backgroundColor="#E5E5EA"
                 />
               </View>
-            </View>
 
-            {/* Prayer Time Toggles */}
-            <View style={styles.card}>
-              {/* Fajr */}
-              <View style={[styles.notificationItem, styles.itemBorder]}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#F3F4FF' }]}>
-                    <Feather name="sun" size={20} color="#8E97CD" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#8E97CD' }]}>Fajr</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.fajr}
-                  onValueChange={() => togglePrayer('fajr')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
-
-              {/* Sunrise */}
-              <View style={[styles.notificationItem, styles.itemBorder]}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#FFF5EC' }]}>
-                    <Feather name="sunrise" size={20} color="#E67E22" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#E67E22' }]}>Sunrise</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.sunrise}
-                  onValueChange={() => togglePrayer('sunrise')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
-
-              {/* Dhuhr */}
-              <View style={[styles.notificationItem, styles.itemBorder]}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#FFFBEB' }]}>
-                    <Feather name="sun" size={20} color="#D4AC0D" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#D4AC0D' }]}>Dhuhr</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.dhuhr}
-                  onValueChange={() => togglePrayer('dhuhr')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
-
-              {/* Asr */}
-              <View style={[styles.notificationItem, styles.itemBorder]}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#FDEDEC' }]}>
-                    <Feather name="sun" size={20} color="#E74C3C" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#E74C3C' }]}>Asr</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.asr}
-                  onValueChange={() => togglePrayer('asr')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
-
-              {/* Maghrib */}
-              <View style={[styles.notificationItem, styles.itemBorder]}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#EBF5FB' }]}>
-                    <Feather name="sunset" size={20} color="#3498DB" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#3498DB' }]}>Maghrib</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.maghrib}
-                  onValueChange={() => togglePrayer('maghrib')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
-
-              {/* Isha */}
-              <View style={styles.notificationItem}>
-                <View style={styles.prayerInfo}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#F5EEF8' }]}>
-                    <Feather name="moon" size={20} color="#9B59B6" />
-                  </View>
-                  <Text style={[styles.prayerText, { color: '#9B59B6' }]}>Isha</Text>
-                </View>
-                <Switch
-                  value={prayerNotifications.isha}
-                  onValueChange={() => togglePrayer('isha')}
-                  trackColor={{ false: '#E5E5EA', true: '#4F56EB' }}
-                  thumbColor={'#FFFFFF'}
-                  ios_backgroundColor="#E5E5EA"
-                  disabled={!enableNotifications}
-                />
-              </View>
+              {/* Prayer Time Toggles */}
+              {renderPrayerItem('fajr', 'sun', '#8E97CD', '#F3F4FF')}
+              {renderPrayerItem('sunrise', 'sunrise', '#E67E22', '#FFF5EC')}
+              {renderPrayerItem('dhuhr', 'sun', '#D4AC0D', '#FFFBEB')}
+              {renderPrayerItem('asr', 'sun', '#E74C3C', '#FDEDEC')}
+              {renderPrayerItem('maghrib', 'sunset', '#3498DB', '#EBF5FB')}
+              {renderPrayerItem('isha', 'moon', '#9B59B6', '#F5EEF8', true)}
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -225,9 +370,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#566B85',
     textAlign: 'center',
-  },
-  mainToggle: {
-    marginBottom: 16,
   },
   card: {
     backgroundColor: 'white',
@@ -259,6 +401,8 @@ const styles = StyleSheet.create({
   prayerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 16,
   },
   iconContainer: {
     width: 36,
@@ -266,11 +410,119 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0F1FF',
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  reminderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  reminderText: {
+    fontSize: 13,
+    color: '#8E8E93',
+  },
+  chevron: {
+    marginLeft: 4,
   },
   prayerText: {
     fontSize: 17,
     fontWeight: '600',
-    marginLeft: 12,
+  },
+  dropdownContent: {
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  dropdownOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 64,
+    borderTopWidth: 0.5,
+    borderTopColor: '#F5F5F5',
+  },
+  dropdownOptionText: {
+    fontSize: 14,
+    color: '#566B85',
+    textAlign: 'left',
+  },
+  dropdownOptionTextSelected: {
+    color: '#4F56EB',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  timeOption: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  timeOptionText: {
+    fontSize: 17,
+    color: '#007AFF',
+  },
+  popupOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
+  popupContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  popupOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  popupOptionFirst: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  popupOptionLast: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    borderBottomWidth: 0,
+  },
+  popupOptionText: {
+    fontSize: 15,
+    color: '#007AFF',
+    textAlign: 'left',
   },
 }); 
