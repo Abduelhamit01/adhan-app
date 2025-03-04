@@ -92,7 +92,6 @@ export default function HomeScreen() {
   useEffect(() => {
     if (nextPrayer) {
       console.log('Current next prayer:', nextPrayer);
-      console.log('Selected background color:', PRAYER_GRADIENTS[nextPrayer.name as PrayerName]);
       
       const interval = setInterval(() => {
         const timeUntil = prayerTimesService.getTimeUntilNextPrayer(nextPrayer);
@@ -109,6 +108,8 @@ export default function HomeScreen() {
       <LinearGradient
         colors={nextPrayer ? PRAYER_GRADIENTS[nextPrayer.name as PrayerName] : ['#F7F9FC', '#F0F3F9', '#E8EDF5']}
         style={{ flex: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
       >
         <SafeAreaView style={{ flex: 1 }}>
           <StatusBar style="dark" />

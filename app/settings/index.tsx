@@ -45,6 +45,8 @@ export default function SettingsScreen() {
       <LinearGradient
         colors={['#F7F9FC', '#F0F3F9', '#E8EDF5']}
         style={{ flex: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
       >
         <SafeAreaView style={{ flex: 1 }}>
           <StatusBar style="dark" />

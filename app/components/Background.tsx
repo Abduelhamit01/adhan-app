@@ -11,7 +11,7 @@ export const Background: React.FC = () => {
         colors={['#E1EBFF', '#B7D1FF']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.7 }}
+        end={{ x: 0, y: 0.3 }}
         locations={[0, 1]}
       />
     </View>
