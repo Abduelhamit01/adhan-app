@@ -14,6 +14,8 @@ export interface PrayerTheme {
   secondary: string;
   accent: string;
   text: string;
+  background?: string;
+  card?: string;
 }
 
 export interface PrayerThemes {

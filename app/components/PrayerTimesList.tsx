@@ -1,88 +1,123 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { PrayerTimes, NextPrayer } from '../types/prayer';
 import { PrayerTheme } from '../types/theme';
-
-const PRAYER_NAMES = {
-  Fajr: 'Fajr',
-  Sunrise: 'Sunrise',
-  Dhuhr: 'Dhuhr',
-  Asr: 'Asr',
-  Maghrib: 'Maghrib',
-  Isha: 'Isha',
-};
-
-const PRAYER_BORDER_COLORS = {
-  Fajr: '#B4B4FF', // Dunkleres Violett
-  Sunrise: '#99CCFF', // Dunkleres Hellblau
-  Dhuhr: '#FFD699', // Dunkleres Beige
-  Asr: '#FFD24D', // Dunkleres Gelb
-  Maghrib: '#FFB3B3', // Dunkleres Rosa
-  Isha: '#B4B4FF', // Dunkleres Violett
-} as const;
+import prayerTimesListStyles from '../styles/prayerTimesList';
 
 interface PrayerTimesListProps {
   prayerTimes: PrayerTimes;
   nextPrayer: NextPrayer | null;
-  currentTheme: PrayerTheme;
+  currentTheme: PrayerTheme & { background?: string; card?: string };
+  isDark?: boolean;
+  timeUntilNextPrayer?: string;
 }
 
-export const PrayerTimesList = ({ prayerTimes, nextPrayer, currentTheme }: PrayerTimesListProps) => {
-  const renderPrayerTime = (name: keyof typeof PRAYER_NAMES, time: string) => {
-    const isNext = nextPrayer?.name === name;
+// Prayer-specific colors - more subtle
+const PRAYER_COLORS = {
+  Fajr: { 
+    accent: '#8DA2FB'
+  },
+  Sunrise: { 
+    accent: '#FBCE8D'
+  },
+  Dhuhr: { 
+    accent: '#8DFBC5'
+  },
+  Asr: { 
+    accent: '#8DC7FB'
+  },
+  Maghrib: { 
+    accent: '#FB8D8D'
+  },
+  Isha: { 
+    accent: '#C78DFB'
+  }
+};
+
+export const PrayerTimesList = ({ 
+  prayerTimes, 
+  nextPrayer, 
+  currentTheme,
+  isDark = false,
+  timeUntilNextPrayer = ''
+}: PrayerTimesListProps) => {
+  
+  if (!nextPrayer) return null;
+  
+  // Format the time remaining in a more readable format
+  const formatTimeRemaining = () => {
+    if (!timeUntilNextPrayer) return '';
     
-    return (
-      <View
-        key={name}
-        style={[
-          styles.prayerItem,
-          {
-            marginHorizontal: 16,
-            borderWidth: isNext ? 2 : 0,
-            borderColor: isNext ? PRAYER_BORDER_COLORS[name] : 'transparent',
-            borderRadius: 16,
-          },
-        ]}
-      >
-        <Text style={[styles.prayerName, { color: currentTheme.text }]}>
-          {PRAYER_NAMES[name]}
+    const parts = timeUntilNextPrayer.split(':');
+    if (parts.length !== 3) return timeUntilNextPrayer;
+    
+    const hours = parseInt(parts[0]);
+    const minutes = parseInt(parts[1]);
+    const seconds = parseInt(parts[2]);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+  
+  // Get accent color for the current prayer
+  const getAccentColor = (name: string) => {
+    return PRAYER_COLORS[name as keyof typeof PRAYER_COLORS]?.accent || '#AAAAAA';
+  };
+  
+  return (
+    <View style={prayerTimesListStyles.container}>
+      {/* Timer display at the top */}
+      <View style={prayerTimesListStyles.timerContainer}>
+        <Text style={[prayerTimesListStyles.timerLabel, { color: currentTheme.text }]}>
+          {nextPrayer.name} in
         </Text>
-        <Text style={[styles.prayerTime, { color: currentTheme.text }]}>
-          {time}
+        <Text style={[prayerTimesListStyles.timerValue, { color: getAccentColor(nextPrayer.name) }]}>
+          {formatTimeRemaining()}
+        </Text>
+        <Text style={[prayerTimesListStyles.untilText, { color: currentTheme.text }]}>
+          verbleibende Zeit
         </Text>
       </View>
-    );
-  };
-
-  return (
-    <View style={styles.container}>
-      {Object.entries(prayerTimes).map(([name, time]) => 
-        renderPrayerTime(name as keyof typeof PRAYER_NAMES, time)
-      )}
+      
+      {/* Prayer Times List */}
+      <View style={prayerTimesListStyles.prayerListContainer}>
+        {Object.entries(prayerTimes).map(([name, time]) => {
+          const isNext = nextPrayer.name === name;
+          
+          return (
+            <View 
+              key={name}
+              style={[
+                prayerTimesListStyles.prayerItem,
+                { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.3)',
+                  borderLeftColor: getAccentColor(name),
+                  borderLeftWidth: isNext ? 4 : 0,
+                }
+              ]}
+            >
+              <Text style={[
+                prayerTimesListStyles.prayerName, 
+                { color: currentTheme.text },
+                isNext && { fontWeight: '700' }
+              ]}>
+                {name}
+              </Text>
+              
+              <Text style={[
+                prayerTimesListStyles.prayerTime, 
+                { color: currentTheme.text }
+              ]}>
+                {time}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 16,
-  },
-  prayerItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    marginVertical: 4,
-  },
-  prayerName: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  prayerTime: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-});
 
 export default PrayerTimesList; 

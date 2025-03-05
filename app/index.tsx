@@ -1,9 +1,8 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { View, ScrollView } from 'react-native';
-import { useState, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 
 // Components
 import { NextPrayerCountdown } from './components/NextPrayerCountdown';
@@ -20,15 +19,18 @@ import { prayerTimesService } from './services/prayerTimes.service';
 // Constants
 import { CITIES } from './constants/cities';
 
+// Theme
+import { prayerThemes, defaultTheme } from './theme/prayerThemes';
+
 type PrayerName = 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
 
-const PRAYER_GRADIENTS: Record<PrayerName, [string, string, string]> = {
-  Fajr: ['#F1F1FF', '#E6E6FA', '#D8D8FF'], // Dawn purple gradient
-  Sunrise: ['#F8FBFF', '#E6F3FF', '#D9EEFF'], // Morning blue gradient
-  Dhuhr: ['#FFF9F3', '#FFF3E6', '#FFE8CC'], // Noon beige gradient
-  Asr: ['#FFFDF5', '#FFF5D6', '#FFE5A3'], // Afternoon yellow gradient
-  Maghrib: ['#FFF1F1', '#FFE6E6', '#FFD9D9'], // Sunset pink gradient
-  Isha: ['#F1F1FF', '#E6E6FA', '#D8D8FF'], // Night purple gradient
+const PRAYER_GRADIENTS: Record<PrayerName, [string, string]> = {
+  Fajr: ['#F0F4F8', '#E1E8ED'],
+  Sunrise: ['#FFF8E1', '#FFECB3'],
+  Dhuhr: ['#FAFAFA', '#F0F0F0'],
+  Asr: ['#E8F5E9', '#C8E6C9'],
+  Maghrib: ['#FBE9E7', '#FFCCBC'],
+  Isha: ['#EDE7F6', '#D1C4E9'],
 } as const;
 
 const STORAGE_KEY = 'selectedCity';
@@ -39,11 +41,20 @@ export default function HomeScreen() {
   const [timeUntilNextPrayer, setTimeUntilNextPrayer] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<City>(CITIES[0]);
   const scrollViewRef = useRef<ScrollView>(null);
-  const currentTheme: PrayerTheme = {
-    primary: 'transparent',
-    secondary: '#F7F9FC',
-    accent: '#566B85',
-    text: '#566B85'
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const currentTheme = nextPrayer 
+    ? prayerThemes[nextPrayer.name as PrayerName] 
+    : defaultTheme;
+
+  // Apply dark mode adjustments if needed
+  const themeWithMode = {
+    ...currentTheme,
+    text: isDark ? '#FFFFFF' : currentTheme.text,
+    secondary: isDark ? '#2A2A2A' : currentTheme.secondary,
+    background: isDark ? '#121212' : '#F8F9FA',
+    card: isDark ? '#1E1E1E' : '#FFFFFF',
   };
 
   useEffect(() => {
@@ -101,40 +112,53 @@ export default function HomeScreen() {
     }
   }, [nextPrayer]);
 
-  return (
-    <View style={{ flex: 1 }}>
-      <LinearGradient
-        colors={nextPrayer ? PRAYER_GRADIENTS[nextPrayer.name as PrayerName] : ['#F7F9FC', '#F0F3F9', '#E8EDF5']}
-        style={{ flex: 1 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.5 }}
-      >
-        <SafeAreaView style={{ flex: 1 }}>
-          <StatusBar style="dark" />
-          
-          <ScrollView
-            style={{ backgroundColor: 'transparent' }}
-            ref={scrollViewRef}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 32 }}
-          >
-            <NextPrayerCountdown
-              nextPrayer={nextPrayer}
-              timeUntilNextPrayer={timeUntilNextPrayer}
-              currentTheme={currentTheme}
-              cityName={selectedCity.name}
-              selectedCityId={selectedCity.id}
-              onCityChange={handleCityChange}
-            />
+  // Get background colors for the current prayer
+  const getBackgroundColor = () => {
+    if (!nextPrayer) return themeWithMode.background;
+    
+    const prayerName = nextPrayer.name as PrayerName;
+    
+    // Prayer-specific colors
+    const PRAYER_COLORS = {
+      Fajr: isDark ? '#1A1D2F' : '#F8FAFF',
+      Sunrise: isDark ? '#2F2A1A' : '#FFFCF5',
+      Dhuhr: isDark ? '#1A2F25' : '#F5FFFC',
+      Asr: isDark ? '#1A252F' : '#F5FAFF',
+      Maghrib: isDark ? '#2F1A1A' : '#FFF5F5',
+      Isha: isDark ? '#251A2F' : '#FAF5FF',
+    };
+    
+    return PRAYER_COLORS[prayerName] || themeWithMode.background;
+  };
 
-            <PrayerTimesList
-              prayerTimes={prayerTimes}
-              nextPrayer={nextPrayer}
-              currentTheme={currentTheme}
-            />
-          </ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
+  return (
+    <View style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      <ScrollView
+        style={{ backgroundColor: 'transparent' }}
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+      >
+        <NextPrayerCountdown
+          nextPrayer={nextPrayer}
+          timeUntilNextPrayer={timeUntilNextPrayer}
+          currentTheme={themeWithMode}
+          cityName={selectedCity.name}
+          selectedCityId={selectedCity.id}
+          onCityChange={handleCityChange}
+          isDark={isDark}
+        />
+
+        <PrayerTimesList
+          prayerTimes={prayerTimes}
+          nextPrayer={nextPrayer}
+          currentTheme={themeWithMode}
+          isDark={isDark}
+          timeUntilNextPrayer={timeUntilNextPrayer}
+        />
+      </ScrollView>
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useState } from 'react';
+import settingsScreenStyles from '../styles/settingsScreen';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -16,28 +17,20 @@ export default function SettingsScreen() {
     <Pressable
       onPress={() => router.back()}
       style={({ pressed }) => ({
-        marginLeft: 16,
+        ...settingsScreenStyles.backButtonContainer,
         opacity: pressed ? 0.7 : 1,
       })}
     >
       <BlurView
         intensity={60}
         tint="light"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        }}
+        style={settingsScreenStyles.blurContainer}
       >
         <MaterialCommunityIcons 
           name="close" 
           size={24} 
           color="#566B85" 
-          style={{ opacity: 0.8 }}
+          style={settingsScreenStyles.iconStyle}
         />
       </BlurView>
     </Pressable>
@@ -51,25 +44,25 @@ export default function SettingsScreen() {
     <View style={{ flex: 1 }}>
       <LinearGradient
         colors={['#F7F9FC', '#F0F3F9', '#E8EDF5']}
-        style={{ flex: 1 }}
+        style={settingsScreenStyles.gradientContainer}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
       >
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={settingsScreenStyles.safeAreaContainer}>
           <StatusBar style="dark" />
-          <View style={styles.header}>
+          <View style={settingsScreenStyles.header}>
             <BackButton />
-            <Text style={styles.title}>Settings</Text>
-            <View style={{ width: 36 }} />
+            <Text style={settingsScreenStyles.title}>Settings</Text>
+            <View style={settingsScreenStyles.placeholderView} />
           </View>
-          <ScrollView style={styles.container}>
+          <ScrollView style={settingsScreenStyles.container}>
             {/* Time Settings Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>TIME SETTINGS</Text>
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemLeft}>
+            <View style={settingsScreenStyles.section}>
+              <Text style={settingsScreenStyles.sectionTitle}>TIME SETTINGS</Text>
+              <View style={settingsScreenStyles.settingItem}>
+                <View style={settingsScreenStyles.settingItemLeft}>
                   <Ionicons name="sunny-outline" size={24} color="#000" />
-                  <Text style={styles.settingItemText}>Fasting Timer</Text>
+                  <Text style={settingsScreenStyles.settingItemText}>Fasting Timer</Text>
                 </View>
                 <Switch
                   value={fastingTimer}
@@ -82,18 +75,18 @@ export default function SettingsScreen() {
             </View>
 
             {/* Notifications Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
+            <View style={settingsScreenStyles.section}>
+              <Text style={settingsScreenStyles.sectionTitle}>NOTIFICATIONS</Text>
               <Pressable 
-                style={styles.settingItem}
+                style={settingsScreenStyles.settingItem}
                 onPress={navigateToNotifications}
               >
-                <View style={styles.settingItemLeft}>
+                <View style={settingsScreenStyles.settingItemLeft}>
                   <Ionicons name="notifications" size={24} color="#FF9500" />
-                  <Text style={styles.settingItemText}>Notifications</Text>
+                  <Text style={settingsScreenStyles.settingItemText}>Notifications</Text>
                 </View>
-                <View style={styles.settingItemRight}>
-                  <Text style={styles.settingItemStatus}>
+                <View style={settingsScreenStyles.settingItemRight}>
+                  <Text style={settingsScreenStyles.settingItemStatus}>
                     {notificationsEnabled ? 'On' : 'Off'}
                   </Text>
                   <MaterialCommunityIcons name="chevron-right" size={24} color="#C7C7CC" />
@@ -105,62 +98,4 @@ export default function SettingsScreen() {
       </LinearGradient>
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#566B85',
-    textAlign: 'center',
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 10,
-    marginLeft: 10,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 1,
-  },
-  settingItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingItemText: {
-    fontSize: 17,
-    fontWeight: '500',
-    marginLeft: 15,
-    color: '#000',
-  },
-  settingItemStatus: {
-    fontSize: 17,
-    color: '#007AFF',
-    marginRight: 5,
-  },
-}); 
+} 

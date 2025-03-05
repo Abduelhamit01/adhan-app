@@ -1,10 +1,11 @@
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, Platform, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { City, Country, State } from '../types/city';
 import { useState, useEffect } from 'react';
 import { LocationService } from '../services/locationService';
+import cityModalStyles from '../styles/cityModal';
 
 interface CityModalProps {
   visible: boolean;
@@ -278,18 +279,18 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
   const renderContent = () => {
     if (isLoading) {
       return (
-        <View style={styles.loadingContainer}>
+        <View style={cityModalStyles.loadingContainer}>
           <ActivityIndicator size="large" color="#566B85" />
-          <Text style={styles.loadingText}>Laden...</Text>
+          <Text style={cityModalStyles.loadingText}>Laden...</Text>
         </View>
       );
     }
     
     if (error) {
       return (
-        <View style={styles.errorContainer}>
+        <View style={cityModalStyles.errorContainer}>
           <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#566B85" />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={cityModalStyles.errorText}>{error}</Text>
         </View>
       );
     }
@@ -298,20 +299,20 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
     
     if (items.length === 0) {
       return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Keine Ergebnisse gefunden</Text>
+        <View style={cityModalStyles.errorContainer}>
+          <Text style={cityModalStyles.errorText}>Keine Ergebnisse gefunden</Text>
         </View>
       );
     }
     
     return (
-      <ScrollView style={styles.cityList}>
+      <ScrollView style={cityModalStyles.cityList}>
         {items.map((item) => (
           <TouchableOpacity
             key={item.id}
             style={[
-              styles.cityItem,
-              currentStep === 'city' && item.id === selectedCityId && styles.selectedCityItem,
+              cityModalStyles.cityItem,
+              currentStep === 'city' && item.id === selectedCityId && cityModalStyles.selectedCityItem,
             ]}
             onPress={() => {
               if (currentStep === 'country') {
@@ -329,8 +330,8 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
             }}
           >
             <Text style={[
-              styles.cityName,
-              currentStep === 'city' && item.id === selectedCityId && styles.selectedCityName,
+              cityModalStyles.cityName,
+              currentStep === 'city' && item.id === selectedCityId && cityModalStyles.selectedCityName,
             ]}>
               {item.name}
             </Text>
@@ -352,25 +353,25 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
       animationType="fade"
       onRequestClose={onDismiss}
     >
-      <View style={styles.modalOverlay}>
-        <BlurView intensity={20} tint="dark" style={styles.blurView}>
-          <View style={styles.modalContent}>
-            <View style={styles.header}>
+      <View style={cityModalStyles.modalOverlay}>
+        <BlurView intensity={20} tint="dark" style={cityModalStyles.blurView}>
+          <View style={cityModalStyles.modalContent}>
+            <View style={cityModalStyles.header}>
               {currentStep !== 'country' && (
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <TouchableOpacity onPress={handleBack} style={cityModalStyles.backButton}>
                   <MaterialCommunityIcons name="arrow-left" size={24} color="#566B85" />
                 </TouchableOpacity>
               )}
-              <Text style={styles.title}>{renderTitle()}</Text>
-              <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
+              <Text style={cityModalStyles.title}>{renderTitle()}</Text>
+              <TouchableOpacity onPress={onDismiss} style={cityModalStyles.closeButton}>
                 <MaterialCommunityIcons name="close" size={24} color="#566B85" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchContainer}>
-              <MaterialCommunityIcons name="magnify" size={24} color="#566B85" style={styles.searchIcon} />
+            <View style={cityModalStyles.searchContainer}>
+              <MaterialCommunityIcons name="magnify" size={24} color="#566B85" style={cityModalStyles.searchIcon} />
               <TextInput
-                style={styles.searchInput}
+                style={cityModalStyles.searchInput}
                 placeholder={`${currentStep === 'country' ? 'Land' : currentStep === 'state' ? 'Bundesland' : 'Stadt'} suchen...`}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -382,7 +383,7 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
               {searchQuery.length > 0 && (
                 <TouchableOpacity
                   onPress={() => setSearchQuery('')}
-                  style={styles.clearButton}
+                  style={cityModalStyles.clearButton}
                 >
                   <MaterialCommunityIcons name="close-circle" size={20} color="#566B85" />
                 </TouchableOpacity>
@@ -392,18 +393,18 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
             {currentStep === 'country' && (
               <TouchableOpacity
                 style={[
-                  styles.cityItem,
-                  'current-location' === selectedCityId && styles.selectedCityItem,
-                  styles.locationButton
+                  cityModalStyles.cityItem,
+                  'current-location' === selectedCityId && cityModalStyles.selectedCityItem,
+                  cityModalStyles.locationButton
                 ]}
                 onPress={handleLocationDetection}
               >
-                <View style={styles.locationContent}>
+                <View style={cityModalStyles.locationContent}>
                   <MaterialCommunityIcons name="crosshairs-gps" size={24} color={selectedCityId === 'current-location' ? '#FFFFFF' : '#566B85'} />
                   <Text style={[
-                    styles.cityName,
-                    'current-location' === selectedCityId && styles.selectedCityName,
-                    styles.locationText
+                    cityModalStyles.cityName,
+                    'current-location' === selectedCityId && cityModalStyles.selectedCityName,
+                    cityModalStyles.locationText
                   ]}>
                     Aktueller Standort
                   </Text>
@@ -421,123 +422,5 @@ export const CityModal = ({ visible, onDismiss, onCitySelect, selectedCityId }: 
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  blurView: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    width: '90%',
-    maxWidth: 400,
-  },
-  modalContent: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    maxHeight: '80%',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(86, 107, 133, 0.1)',
-  },
-  title: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#566B85',
-    textAlign: 'center',
-  },
-  backButton: {
-    padding: 4,
-    marginRight: 8,
-  },
-  closeButton: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 12,
-    paddingHorizontal: 12,
-    height: 44,
-    backgroundColor: 'rgba(86, 107, 133, 0.05)',
-    borderRadius: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: '100%',
-    color: '#566B85',
-    fontSize: 16,
-  },
-  clearButton: {
-    padding: 4,
-  },
-  cityList: {
-    padding: 12,
-  },
-  cityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    marginVertical: 4,
-    backgroundColor: 'rgba(86, 107, 133, 0.05)',
-  },
-  selectedCityItem: {
-    backgroundColor: '#566B85',
-  },
-  cityName: {
-    fontSize: 16,
-    color: '#566B85',
-    fontWeight: '500',
-  },
-  selectedCityName: {
-    color: '#FFFFFF',
-  },
-  locationButton: {
-    marginHorizontal: 12,
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  locationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationText: {
-    marginLeft: 12,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#566B85',
-    fontSize: 16,
-  },
-  errorContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  errorText: {
-    marginTop: 10,
-    color: '#566B85',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-});
 
 export default CityModal; 

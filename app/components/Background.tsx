@@ -4,15 +4,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { height } = Dimensions.get('window');
 
-export const Background: React.FC = () => {
+interface BackgroundProps {
+  colors?: [string, string];
+}
+
+export const Background: React.FC<BackgroundProps> = ({ colors = ['#FFFFFF', '#F5F5F5'] }) => {
   return (
     <View style={[StyleSheet.absoluteFill, styles.container]}>
       <LinearGradient
-        colors={['#E1EBFF', '#B7D1FF']}
+        colors={colors}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.3 }}
-        locations={[0, 1]}
+        end={{ x: 0, y: 1 }}
       />
     </View>
   );
